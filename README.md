@@ -1,7 +1,3 @@
-<<<<<<<
-# multi-tier-hospital-aws-app
-Multi-tier hospital management system built with Flask, MySQL, and AWS infrastructure (EC2, RDS, Terraform).
-=======
 #  SKS Medical Center - Multi-Tier Hospital Management System
 
 [![AWS](https://img.shields.io/badge/AWS-Cloud-orange?logo=amazon-aws)](https://aws.amazon.com/)
@@ -449,4 +445,3 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 **Built with ❤️ using AWS, Terraform, Python, and Flask**
 
 **Current Version:** Phase 2 Complete 
->>>>>>> d561cc4 (Initial commit - hospital app)
