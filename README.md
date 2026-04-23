@@ -43,7 +43,8 @@ cd multi-tier-hospital-aws-app
 cd terraform
 terraform init
 terraform plan
-terraform apply 
+terraform apply
+```
 
 ## Learning Outcomes
 
