@@ -1,0 +1,88 @@
+services:
+  # MySQL Database Service
+  database:
+    image: mysql:8.0
+    container_name: hospital-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpass123}
+      MYSQL_DATABASE: ${DB_NAME:-hospital}
+      MYSQL_USER: ${DB_USER:-hospitaluser}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-password123}
+      MYSQL_TCP_PORT: ${DB_PORT:-3306}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      #- ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - hospital_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${DB_USER:-hospitaluser}", "-p${DB_PASSWORD:-password123}"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+
+  # Flask Application Service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hospital-app
+    restart: unless-stopped
+    environment:
+      FLASK_ENV: ${FLASK_ENV:-production}
+      FLASK_APP: app:app
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-in-production}
+      SQLALCHEMY_DATABASE_URI: mysql+pymysql://${DB_USER:-hospitaluser}:${DB_PASSWORD:-password123}@database:${DB_PORT:-3306}/${DB_NAME:-hospital}
+      DATABASE_HOST: database
+      DATABASE_PORT: ${DB_PORT:-3306}
+      DATABASE_NAME: ${DB_NAME:-hospital}
+      DATABASE_USER: ${DB_USER:-hospitaluser}
+      DATABASE_PASSWORD: ${DB_PASSWORD:-password123}
+    ports:
+      - "${APP_PORT:-5000}:5000"
+    volumes:
+      - ./application:/app
+      - app_logs:/app/logs
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - hospital_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Optional: phpMyAdmin for database management
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: hospital-phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: database
+      PMA_USER: ${DB_USER:-hospitaluser}
+      PMA_PASSWORD: ${DB_PASSWORD:-password123}
+      PMA_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpass123}
+    ports:
+      - "${PHPMYADMIN_PORT:-8081}:80"
+    depends_on:
+      - database
+    networks:
+      - hospital_network
+
+volumes:
+  mysql_data:
+    driver: local
+  app_logs:
+    driver: local
+
+networks:
+  hospital_network:
+    driver: bridge
